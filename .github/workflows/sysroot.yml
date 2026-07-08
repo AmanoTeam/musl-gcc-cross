@@ -40,7 +40,7 @@ jobs:
         
         unlink "${RAIDEN_TARBALL}"
         
-        export RAIDEN_HOME='/tmp/raiden'
+        export RAIDEN_HOME='/tmp/musl-gcc-cross'
         export PATH="${RAIDEN_HOME}/bin:${PATH}"
         
         export CMAKE_TOOLCHAIN_FILE="${RAIDEN_HOME}/usr/local/share/mingw/cmake/${{ matrix.target }}.cmake"

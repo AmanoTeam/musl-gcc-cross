@@ -500,6 +500,12 @@ if [[ "${CROSS_COMPILE_TRIPLET}" = *'-haiku' ]]; then
 	export ac_cv_c_bigendian='no'
 fi
 
+sed \
+	--in-place \
+	--regexp-extended \
+	"s/(GCC_MAJOR_VERSION\[\] = )\"[0-9]+\"/\1\"${gcc_major}\"/g" \
+	"${workdir}/submodules/obggcc/tools/gcc-wrapper/gcc.c" \
+
 make \
 	-C "${workdir}/submodules/obggcc/tools/gcc-wrapper" \
 	PREFIX="$(dirname "${gcc_wrapper}")" \
