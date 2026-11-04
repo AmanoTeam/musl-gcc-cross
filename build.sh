@@ -6,44 +6,44 @@ declare -r workdir="${PWD}"
 
 declare -r revision="$(git rev-parse --short HEAD)"
 
-declare -r toolchain_directory='/tmp/musl-gcc-cross'
+declare -r toolchain_directory='/var/tmp/musl-gcc-cross'
 declare -r share_directory="${toolchain_directory}/usr/local/share/musl-gcc-cross"
 
 declare -r environment="LD_LIBRARY_PATH=${toolchain_directory}/lib PATH=${PATH}:${toolchain_directory}/bin"
 
 declare -r gcc_major='16'
 
-declare -r gmp_tarball='/tmp/gmp.tar.xz'
-declare -r gmp_directory='/tmp/gmp'
+declare -r gmp_tarball='/var/tmp/gmp.tar.xz'
+declare -r gmp_directory='/var/tmp/gmp'
 
-declare -r mpfr_tarball='/tmp/mpfr.tar.xz'
-declare -r mpfr_directory='/tmp/mpfr-master'
+declare -r mpfr_tarball='/var/tmp/mpfr.tar.xz'
+declare -r mpfr_directory='/var/tmp/mpfr-master'
 
-declare -r mpc_tarball='/tmp/mpc.tar.gz'
-declare -r mpc_directory='/tmp/mpc-master'
+declare -r mpc_tarball='/var/tmp/mpc.tar.gz'
+declare -r mpc_directory='/var/tmp/mpc-master'
 
-declare -r isl_tarball='/tmp/isl.tar.xz'
-declare -r isl_directory='/tmp/isl-master'
+declare -r isl_tarball='/var/tmp/isl.tar.xz'
+declare -r isl_directory='/var/tmp/isl-master'
 
-declare -r binutils_tarball='/tmp/binutils.tar.xz'
-declare -r binutils_directory='/tmp/binutils'
+declare -r binutils_tarball='/var/tmp/binutils.tar.xz'
+declare -r binutils_directory='/var/tmp/binutils'
 
-declare -r gcc_tarball='/tmp/gcc.tar.xz'
-declare -r gcc_directory="/tmp/gcc-releases-gcc-${gcc_major}"
+declare -r gcc_tarball='/var/tmp/gcc.tar.xz'
+declare -r gcc_directory="/var/tmp/gcc-releases-gcc-${gcc_major}"
 
-declare -r zlib_tarball='/tmp/zlib.tar.gz'
-declare -r zlib_directory='/tmp/zlib-develop'
+declare -r zlib_tarball='/var/tmp/zlib.tar.gz'
+declare -r zlib_directory='/var/tmp/zlib-develop'
 
-declare -r zstd_tarball='/tmp/zstd.tar.gz'
-declare -r zstd_directory='/tmp/zstd-dev'
+declare -r zstd_tarball='/var/tmp/zstd.tar.gz'
+declare -r zstd_directory='/var/tmp/zstd-dev'
 
-declare -r coreutils_tarball='/tmp/coreutils.tar.xz'
-declare -r coreutils_directory='/tmp/coreutils-9.12'
+declare -r coreutils_tarball='/var/tmp/coreutils.tar.xz'
+declare -r coreutils_directory='/var/tmp/coreutils-9.12'
 
 declare -r nz_directory="${workdir}/submodules/nz"
-declare -r nz_prefix='/tmp/nz'
+declare -r nz_prefix='/var/tmp/nz'
 
-declare -r sysroot_tarball='/tmp/sysroot.tar.xz'
+declare -r sysroot_tarball='/var/tmp/sysroot.tar.xz'
 
 declare -r max_jobs='30'
 
@@ -58,8 +58,8 @@ declare -ra targets=(
 	'aarch64-unknown-linux-musl'
 )
 
-declare -r gcc_wrapper='/tmp/gcc-wrapper'
-declare -r clang_wrapper='/tmp/clang-wrapper'
+declare -r gcc_wrapper='/var/tmp/gcc-wrapper'
+declare -r clang_wrapper='/var/tmp/clang-wrapper'
 
 declare build_nz='1'
 
@@ -463,7 +463,7 @@ unlink "${toolchain_directory}/lib/libz.a"
 cd "${coreutils_directory}/build"
 
 CC= CXX= AR= RANLIB= ../configure \
-	--prefix='/tmp' \
+	--prefix='/var/tmp' \
 	CFLAGS="${ccflags}" \
 	CXXFLAGS="${ccflags}" \
 	LDFLAGS="${linkflags}"
@@ -518,11 +518,11 @@ if (( build_nz )); then
 	rmdir "${nz_prefix}/lib"
 fi
 
-printf '%s\n' '#!/bin/bash' '/tmp/bin/ln --symbolic --relative \"\${@}\"' > '/tmp/ln'
+printf '%s\n' '#!/bin/bash' '/var/tmp/bin/ln --symbolic --relative \"\${@}\"' > '/var/tmp/ln'
 
-chmod +x '/tmp/ln'
+chmod +x '/var/tmp/ln'
 
-export PATH="/tmp:${PATH}"
+export PATH="/var/tmp:${PATH}"
 
 if [[ "${CROSS_COMPILE_TRIPLET}" = 'arm'*'-android'* ]] || [[ "${CROSS_COMPILE_TRIPLET}" = 'i686-'*'-android'* ]] || [[ "${CROSS_COMPILE_TRIPLET}" = 'mipsel-'*'-android'* ]]; then
 	export \

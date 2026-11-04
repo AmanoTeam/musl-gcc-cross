@@ -19,13 +19,13 @@ jobs:
     - name: Install CMake
       run: |
         declare -r CMAKE_TAG='nightly'
-        declare -r CMAKE_TARBALL='/tmp/toolchain.tar.xz'
+        declare -r CMAKE_TARBALL='/var/tmp/toolchain.tar.xz'
         declare -r CMAKE_URL="https://github.com/AmanoTeam/cmake-builds/releases/download/${CMAKE_TAG}/x86_64-unknown-linux-gnu.tar.xz"
         
         curl --connect-timeout '10' --retry '15' --retry-all-errors --fail --silent --location --url "${CMAKE_URL}" --output "${CMAKE_TARBALL}"
         tar --directory="$(dirname "${CMAKE_TARBALL}")" --extract --file="${CMAKE_TARBALL}"
         
-        export CMAKE_HOME='/tmp/cmake'
+        export CMAKE_HOME='/var/tmp/cmake'
         export PATH="${CMAKE_HOME}/bin:${PATH}"
         
         echo "PATH=${PATH}" >> "${GITHUB_ENV}"
@@ -36,8 +36,8 @@ jobs:
         key: gcc-16
         lookup-only: true
         path: |
-          /tmp/x86_64-linux-gnu.tar.xz
-          /tmp/x86_64-linux-gnu.tar.xz.sha256
+          /var/tmp/x86_64-linux-gnu.tar.xz
+          /var/tmp/x86_64-linux-gnu.tar.xz.sha256
     - name: Build musl-gcc-cross
       if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
       run: |
@@ -45,9 +45,9 @@ jobs:
     - name: Generate tarball
       if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
       run: |
-        declare tarball_filename='/tmp/x86_64-linux-gnu.tar.xz'
-        tar --directory='/tmp' --create --file=- 'musl-gcc-cross' | xz --threads='0' --compress -9 > "${tarball_filename}"
-        sha256sum "${tarball_filename}" | sed 's|/tmp/||' > "${tarball_filename}.sha256"
+        declare tarball_filename='/var/tmp/x86_64-linux-gnu.tar.xz'
+        tar --directory='/var/tmp' --create --file=- 'musl-gcc-cross' | xz --threads='0' --compress -9 > "${tarball_filename}"
+        sha256sum "${tarball_filename}" | sed 's|/var/tmp/||' > "${tarball_filename}.sha256"
     - name: Upload artifact
       if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
       uses: actions/upload-artifact@main
@@ -55,16 +55,16 @@ jobs:
         name: native-toolchain
         if-no-files-found: error
         path: |
-          /tmp/x86_64-linux-gnu.tar.xz
-          /tmp/x86_64-linux-gnu.tar.xz.sha256
+          /var/tmp/x86_64-linux-gnu.tar.xz
+          /var/tmp/x86_64-linux-gnu.tar.xz.sha256
     - name: Cache artifact
       if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
       uses: actions/cache@main
       with:
         key: gcc-16
         path: |
-          /tmp/x86_64-linux-gnu.tar.xz
-          /tmp/x86_64-linux-gnu.tar.xz.sha256
+          /var/tmp/x86_64-linux-gnu.tar.xz
+          /var/tmp/x86_64-linux-gnu.tar.xz.sha256
   
   cross-build:
     name: 'Cross build'
@@ -120,13 +120,13 @@ jobs:
     - name: Install CMake
       run: |
         declare -r CMAKE_TAG='nightly'
-        declare -r CMAKE_TARBALL='/tmp/toolchain.tar.xz'
+        declare -r CMAKE_TARBALL='/var/tmp/toolchain.tar.xz'
         declare -r CMAKE_URL="https://github.com/AmanoTeam/cmake-builds/releases/download/${CMAKE_TAG}/x86_64-unknown-linux-gnu.tar.xz"
         
         curl --connect-timeout '10' --retry '15' --retry-all-errors --fail --silent --location --url "${CMAKE_URL}" --output "${CMAKE_TARBALL}"
         tar --directory="$(dirname "${CMAKE_TARBALL}")" --extract --file="${CMAKE_TARBALL}"
         
-        export CMAKE_HOME='/tmp/cmake'
+        export CMAKE_HOME='/var/tmp/cmake'
         export PATH="${CMAKE_HOME}/bin:${PATH}"
         
         echo "PATH=${PATH}" >> "${GITHUB_ENV}"
@@ -140,85 +140,85 @@ jobs:
         key: gcc-16
         fail-on-cache-miss: true
         path: |
-          /tmp/x86_64-linux-gnu.tar.xz
-          /tmp/x86_64-linux-gnu.tar.xz.sha256
+          /var/tmp/x86_64-linux-gnu.tar.xz
+          /var/tmp/x86_64-linux-gnu.tar.xz.sha256
     - name: Setup toolchain
       run: |
-        tar --directory='/tmp' --extract --file='/tmp/x86_64-linux-gnu.tar.xz'
-        mv '/tmp/musl-gcc-cross' '/tmp/musl-gcc-cross-toolchain'
+        tar --directory='/var/tmp' --extract --file='/var/tmp/x86_64-linux-gnu.tar.xz'
+        mv '/var/tmp/musl-gcc-cross' '/var/tmp/musl-gcc-cross-toolchain'
     - name: Cross-compile musl-gcc-cross to ${{ matrix.target }}
       run: |
         source './tools/setup_toolchain.sh'
         
         if [[ '${{ matrix.target }}' = *'-linux-musl'* ]]; then
             # declare -r RAIDEN_TAG="$(jq --raw-output '.tag_name' <<< "$(curl --connect-timeout '10' --retry '15' --retry-all-errors --fail --silent --url 'https://api.github.com/repos/AmanoTeam/musl-gcc-cross/releases/latest')")"
-            # declare -r RAIDEN_TARBALL='/tmp/toolchain.tar.xz'
+            # declare -r RAIDEN_TARBALL='/var/tmp/toolchain.tar.xz'
             # declare -r RAIDEN_URL="https://github.com/AmanoTeam/musl-gcc-cross/releases/download/${RAIDEN_TAG}/x86_64-unknown-linux-gnu.tar.xz"
             
             # curl --connect-timeout '10' --retry '15' --retry-all-errors --fail --silent --location --url "${RAIDEN_URL}" --output "${RAIDEN_TARBALL}"
             # tar --directory="$(dirname "${RAIDEN_TARBALL}")" --extract --file="${RAIDEN_TARBALL}"
             
-            # export RAIDEN_HOME='/tmp/musl-gcc-cross'
+            # export RAIDEN_HOME='/var/tmp/musl-gcc-cross'
             export PATH="${RAIDEN_HOME}/bin:${PATH}"
             
             source "${PWD}/tools/dev/autotools/${{ matrix.target }}.sh"
         elif [[ '${{ matrix.target }}' = *'-linux-gnu'* ]]; then
             declare -r OBGGCC_TAG="$(jq --raw-output '.tag_name' <<< "$(curl --connect-timeout '10' --retry '15' --retry-all-errors --fail --silent --url 'https://api.github.com/repos/AmanoTeam/obggcc/releases/latest')")"
-            declare -r OBGGCC_TARBALL='/tmp/toolchain.tar.xz'
+            declare -r OBGGCC_TARBALL='/var/tmp/toolchain.tar.xz'
             declare -r OBGGCC_URL="https://github.com/AmanoTeam/obggcc/releases/download/${OBGGCC_TAG}/x86_64-unknown-linux-gnu.tar.xz"
             
             curl --connect-timeout '10' --retry '15' --retry-all-errors --fail --silent --location --url "${OBGGCC_URL}" --output "${OBGGCC_TARBALL}"
             tar --directory="$(dirname "${OBGGCC_TARBALL}")" --extract --file="${OBGGCC_TARBALL}"
             
-            export OBGGCC_HOME='/tmp/obggcc'
+            export OBGGCC_HOME='/var/tmp/obggcc'
             export PATH="${OBGGCC_HOME}/bin:${PATH}"
             
             source "${OBGGCC_HOME}/build/autotools/${{ matrix.target }}.sh"
         elif [[ '${{ matrix.target }}' = *'-freebsd' ]]; then
             declare -r LOKI_TAG="$(jq --raw-output '.tag_name' <<< "$(curl  --connect-timeout '10' --retry '15' --retry-all-errors --fail --silent --url 'https://api.github.com/repos/AmanoTeam/freebsd-gcc-cross/releases/latest')")"
-            declare -r LOKI_TARBALL='/tmp/toolchain.tar.xz'
+            declare -r LOKI_TARBALL='/var/tmp/toolchain.tar.xz'
             declare -r LOKI_URL="https://github.com/AmanoTeam/freebsd-gcc-cross/releases/download/${LOKI_TAG}/x86_64-unknown-linux-gnu.tar.xz"
             
             curl --silent --connect-timeout '10' --retry '15' --retry-all-errors --fail --location --url "${LOKI_URL}" --output "${LOKI_TARBALL}"
             tar --directory="$(dirname "${LOKI_TARBALL}")" --extract --file="${LOKI_TARBALL}"
             
-            export LOKI_HOME='/tmp/freebsd-gcc-cross'
+            export LOKI_HOME='/var/tmp/freebsd-gcc-cross'
             export PATH="${LOKI_HOME}/bin:${PATH}"
             
             source "${LOKI_HOME}/build/autotools/${{ matrix.target }}.sh"
         elif [[ '${{ matrix.target }}' = *'-netbsd'* ]]; then
             declare -r DAKINI_TAG="$(jq --raw-output '.tag_name' <<< "$(curl --connect-timeout '10' --retry '15' --retry-all-errors --fail --silent --url 'https://api.github.com/repos/AmanoTeam/netbsd-gcc-cross/releases/latest')")"
-            declare -r DAKINI_TARBALL='/tmp/toolchain.tar.xz'
+            declare -r DAKINI_TARBALL='/var/tmp/toolchain.tar.xz'
             declare -r DAKINI_URL="https://github.com/AmanoTeam/netbsd-gcc-cross/releases/download/${DAKINI_TAG}/x86_64-unknown-linux-gnu.tar.xz"
             
             curl --connect-timeout '10' --retry '15' --retry-all-errors --fail --silent --location --url "${DAKINI_URL}" --output "${DAKINI_TARBALL}"
             tar --directory="$(dirname "${DAKINI_TARBALL}")" --extract --file="${DAKINI_TARBALL}"
             
-            export DAKINI_HOME='/tmp/netbsd-gcc-cross'
+            export DAKINI_HOME='/var/tmp/netbsd-gcc-cross'
             export PATH="${DAKINI_HOME}/bin:${PATH}"
             
             source "${DAKINI_HOME}/build/autotools/${{ matrix.target }}.sh"
         elif [[ '${{ matrix.target }}' = *'-dragonfly' ]]; then
             declare -r VENTI_TAG="$(jq --raw-output '.tag_name' <<< "$(curl --connect-timeout '10' --retry '15' --retry-all-errors --fail --silent --url 'https://api.github.com/repos/AmanoTeam/dragonfly-gcc-cross/releases/latest')")"
-            declare -r VENTI_TARBALL='/tmp/toolchain.tar.xz'
+            declare -r VENTI_TARBALL='/var/tmp/toolchain.tar.xz'
             declare -r VENTI_URL="https://github.com/AmanoTeam/dragonfly-gcc-cross/releases/download/${VENTI_TAG}/x86_64-unknown-linux-gnu.tar.xz"
             
             curl --connect-timeout '10' --retry '15' --retry-all-errors --fail --silent --location --url "${VENTI_URL}" --output "${VENTI_TARBALL}"
             tar --directory="$(dirname "${VENTI_TARBALL}")" --extract --file="${VENTI_TARBALL}"
             
-            export VENTI_HOME='/tmp/dragonfly-gcc-cross'
+            export VENTI_HOME='/var/tmp/dragonfly-gcc-cross'
             export PATH="${VENTI_HOME}/bin:${PATH}"
             
             source "${VENTI_HOME}/build/autotools/${{ matrix.target }}.sh"
         elif [[ '${{ matrix.target }}' = *'-android'* ]]; then
             declare -r PINO_TAG="$(jq --raw-output '.tag_name' <<< "$(curl --connect-timeout '10' --retry '15' --retry-all-errors --fail --silent --url 'https://api.github.com/repos/AmanoTeam/android-gcc-cross/releases/latest')")"
-            declare -r PINO_TARBALL='/tmp/toolchain.tar.xz'
+            declare -r PINO_TARBALL='/var/tmp/toolchain.tar.xz'
             declare -r PINO_URL="https://github.com/AmanoTeam/android-gcc-cross/releases/download/${PINO_TAG}/x86_64-unknown-linux-gnu.tar.xz"
             
             curl --connect-timeout '10' --retry '15' --retry-all-errors --fail --silent --location --url "${PINO_URL}" --output "${PINO_TARBALL}"
             tar --directory="$(dirname "${PINO_TARBALL}")" --extract --file="${PINO_TARBALL}"
             
-            export PINO_HOME='/tmp/android-gcc-cross'
+            export PINO_HOME='/var/tmp/android-gcc-cross'
             export PATH="${PINO_HOME}/bin:${PATH}"
             
             source "${PINO_HOME}/build/autotools/${{ matrix.target }}.sh"
@@ -230,7 +230,7 @@ jobs:
                 --url 'https://raw.githubusercontent.com/AmanoTeam/darwin-clang-cross/refs/heads/master/main.sh' \
                     | bash -s -- install
             
-            export DARWIN_HOME='/tmp/darwin-clang-cross'
+            export DARWIN_HOME='/var/tmp/darwin-clang-cross'
             export PATH="${DARWIN_HOME}/bin:${PATH}"
             
             source "${DARWIN_HOME}/build/autotools/${{ matrix.target }}.sh"
@@ -239,17 +239,17 @@ jobs:
         bash './build.sh' '${{ matrix.target }}'
     - name: Generate tarball
       run: |
-        declare tarball_filename='/tmp/${{ matrix.target }}.tar.xz'
-        tar --directory='/tmp' --create --file=- 'musl-gcc-cross' | xz --threads='0' --compress -9 > "${tarball_filename}"
-        sha256sum "${tarball_filename}" | sed 's|/tmp/||' > "${tarball_filename}.sha256"
+        declare tarball_filename='/var/tmp/${{ matrix.target }}.tar.xz'
+        tar --directory='/var/tmp' --create --file=- 'musl-gcc-cross' | xz --threads='0' --compress -9 > "${tarball_filename}"
+        sha256sum "${tarball_filename}" | sed 's|/var/tmp/||' > "${tarball_filename}.sha256"
     - name: Upload artifact
       uses: actions/upload-artifact@main
       with:
         name: ${{ matrix.target }}
         if-no-files-found: error
         path: |
-          /tmp/${{ matrix.target }}.tar.xz
-          /tmp/${{ matrix.target }}.tar.xz.sha256
+          /var/tmp/${{ matrix.target }}.tar.xz
+          /var/tmp/${{ matrix.target }}.tar.xz.sha256
 
   release:
     needs: cross-build
