@@ -37,6 +37,9 @@ declare -r zlib_directory='/tmp/zlib-develop'
 declare -r zstd_tarball='/tmp/zstd.tar.gz'
 declare -r zstd_directory='/tmp/zstd-dev'
 
+declare -r coreutils_tarball='/tmp/coreutils.tar.xz'
+declare -r coreutils_directory='/tmp/coreutils-9.12'
+
 declare -r nz_directory="${workdir}/submodules/nz"
 declare -r nz_prefix='/tmp/nz'
 
@@ -264,6 +267,23 @@ if ! [ -f "${zstd_tarball}" ]; then
 		--file="${zstd_tarball}"
 fi
 
+if ! [ -f "${coreutils_tarball}" ]; then
+	curl \
+		--url 'https://ftp.gnu.org/gnu/coreutils/coreutils-9.12.tar.xz' \
+		--retry '30' \
+		--retry-delay '0' \
+		--retry-all-errors \
+		--retry-max-time '0' \
+		--location \
+		--silent \
+		--output "${coreutils_tarball}"
+	
+	tar \
+		--directory="$(dirname "${coreutils_directory}")" \
+		--extract \
+		--file="${coreutils_tarball}"
+fi
+
 if ! [ -f "${gcc_tarball}" ]; then
 	curl \
 		--url "https://github.com/gcc-mirror/gcc/archive/releases/gcc-${gcc_major}.tar.gz" \
@@ -438,6 +458,19 @@ make install
 
 unlink "${toolchain_directory}/lib/libz.a"
 
+[ -d "${coreutils_directory}/build" ] || mkdir "${coreutils_directory}/build"
+
+cd "${coreutils_directory}/build"
+
+CC= CXX= AR= RANLIB= ../configure \
+	--prefix='/tmp' \
+	CFLAGS="${ccflags}" \
+	CXXFLAGS="${ccflags}" \
+	LDFLAGS="${linkflags}"
+
+make all --jobs='1'
+make install
+
 [ -d "${zstd_directory}/.build" ] || mkdir "${zstd_directory}/.build"
 
 cd "${zstd_directory}/.build"
@@ -485,8 +518,9 @@ if (( build_nz )); then
 	rmdir "${nz_prefix}/lib"
 fi
 
-# We prefer symbolic links over hard links.
-cp "${workdir}/submodules/obggcc/tools/ln.sh" '/tmp/ln'
+printf '%s\n' '#!/bin/bash' '/tmp/bin/ln --symbolic --relative \"\${@}\"' > '/tmp/ln'
+
+chmod +x '/tmp/ln'
 
 export PATH="/tmp:${PATH}"
 
